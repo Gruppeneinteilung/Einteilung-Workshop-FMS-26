@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop-Zuteilung</title>
+<style>
+  :root{
+    --ink:#22303B;
+    --paper:#EEF1EC;
+    --paper-2:#E2E7DF;
+    --line:#C7CFC5;
+    --amber:#C48A1F;
+    --amber-dark:#9C6E17;
+    --green:#3E6B54;
+    --green-bg:#DDE9E1;
+    --red:#B4432E;
+    --red-bg:#F3DFD9;
+    --white:#FBFAF7;
+    font-family: 'Iowan Old Style', 'Georgia', serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 0 60px;}
+  header{
+    padding:28px 20px 18px;
+    border-bottom:2px solid var(--ink);
+    background:var(--white);
+  }
+  header h1{
+    font-family:'Iowan Old Style','Georgia',serif;
+    font-weight:600;
+    font-size:1.55rem;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    font-size:0.92rem;
+    color:#54615C;
+    line-height:1.4;
+  }
+  nav.tabs{
+    display:flex;
+    overflow-x:auto;
+    background:var(--white);
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  nav.tabs button{
+    flex:1 0 auto;
+    padding:13px 14px;
+    border:none;
+    background:none;
+    font-size:0.86rem;
+    font-weight:600;
+    color:#7C877F;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+    font-family:inherit;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom-color:var(--amber);
+  }
+  main{padding:20px;}
+  section{display:none;}
+  section.active{display:block;}
+  .card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:18px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-family:'Iowan Old Style','Georgia',serif;
+    font-size:1.05rem;
+    margin:0 0 12px;
+    font-weight:600;
+  }
+  label{
+    display:block;
+    font-size:0.8rem;
+    font-weight:600;
+    color:#54615C;
+    margin-bottom:5px;
+    margin-top:12px;
+  }
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=number]{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    font-size:0.95rem;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:inherit;
+  }
+  input:focus{outline:2px solid var(--amber); outline-offset:1px;}
+  .ws-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .ws-row .num{
+    width:22px;
+    font-size:0.8rem;
+    color:#8A948E;
+    flex-shrink:0;
+  }
+  .ws-row input[type=text]{flex:1;}
+  .ws-row input[type=number]{width:64px;flex-shrink:0;}
+  .btn{
+    display:inline-block;
+    padding:10px 18px;
+    border-radius:3px;
+    border:none;
+    font-weight:600;
+    font-size:0.88rem;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .btn-primary{background:var(--ink); color:var(--white);}
+  .btn-primary:hover{background:#354450;}
+  .btn-amber{background:var(--amber); color:var(--white);}
+  .btn-amber:hover{background:var(--amber-dark);}
+  .btn-ghost{background:none; border:1px solid var(--line); color:var(--ink);}
+  .btn-ghost:hover{background:var(--paper-2);}
+  .btn-danger{background:none; color:var(--red); border:1px solid var(--red-bg);}
+  .btn:disabled{opacity:0.45; cursor:not-allowed;}
+  .row-actions{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+  .choice-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:6px;
+  }
+  .choice{
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:10px 12px;
+    cursor:pointer;
+    font-size:0.9rem;
+    user-select:none;
+    background:var(--paper);
+    position:relative;
+  }
+  .choice.selected{
+    border-color:var(--amber);
+    background:#FBF0DC;
+    font-weight:600;
+  }
+  .choice .badge{
+    position:absolute;
+    top:6px;
+    right:8px;
+    font-size:0.7rem;
+    color:var(--amber-dark);
+    font-weight:700;
+  }
+  .hint{font-size:0.78rem; color:#8A948E; margin-top:4px;}
+  table{width:100%; border-collapse:collapse; font-size:0.85rem;}
+  th,td{text-align:left; padding:7px 6px; border-bottom:1px solid var(--line);}
+  th{color:#54615C; font-weight:600; font-size:0.75rem; text-transform:none;}
+  td.center, th.center{text-align:center;}
+  .pill{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:0.72rem;
+    font-weight:600;
+  }
+  .pill-ok{background:var(--green-bg); color:var(--green);}
+  .pill-warn{background:var(--red-bg); color:var(--red);}
+  .empty{
+    text-align:center;
+    padding:30px 10px;
+    color:#8A948E;
+    font-size:0.9rem;
+  }
+  .stat-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:4px;}
+  .stat{
+    flex:1;
+    min-width:90px;
+    background:var(--paper);
+    border-radius:3px;
+    padding:10px 12px;
+    text-align:center;
+  }
+  .stat .num{font-size:1.3rem; font-weight:700; font-family:'Iowan Old Style','Georgia',serif;}
+  .stat .lbl{font-size:0.7rem; color:#7C877F; margin-top:2px;}
+  .day-tabs{display:flex; gap:6px; margin-bottom:12px;}
+  .day-tabs button{
+    flex:1;
+    padding:8px;
+    border:1px solid var(--line);
+    background:var(--white);
+    border-radius:3px;
+    font-size:0.82rem;
+    font-weight:600;
+    cursor:pointer;
+    color:#54615C;
+    font-family:inherit;
+  }
+  .day-tabs button.active{
+    background:var(--ink);
+    color:var(--white);
+    border-color:var(--ink);
+  }
+  .ws-block{margin-bottom:16px;}
+  .ws-block h3{
+    font-size:0.9rem;
+    margin:0 0 6px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:inherit;
+    font-weight:700;
+  }
+  .ws-block ul{margin:0; padding-left:18px; font-size:0.85rem; line-height:1.7;}
+  .del-x{
+    background:none;border:none;color:#B0453099;cursor:pointer;font-size:1.1rem;
+    line-height:1; padding:0 4px;
+  }
+  .msg{
+    font-size:0.83rem;
+    padding:9px 12px;
+    border-radius:3px;
+    margin-top:10px;
+  }
+  .msg-ok{background:var(--green-bg); color:var(--green);}
+  .msg-err{background:var(--red-bg); color:var(--red);}
+  select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    font-size:0.95rem;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .footnote{font-size:0.76rem; color:#8A948E; margin-top:18px; line-height:1.5;}
+  .print-only{display:none;}
+  @media print{
+    body > *:not(#print-area){display:none !important;}
+    #print-area{display:block !important;}
+    #print-area h1{font-family:'Iowan Old Style','Georgia',serif; font-size:1.3rem; margin:0 0 2px;}
+    #print-area .meta{font-size:0.85rem; color:#54615C; margin-bottom:16px;}
+    #print-area table{width:100%; border-collapse:collapse;}
+    #print-area th, #print-area td{border:1px solid #999; padding:6px 8px; font-size:0.85rem; text-align:left;}
+    #print-area th{background:#EEE;}
+  }
+</style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Workshop-Zuteilung</h1>
+    <p>ca. 85 Teilnehmende · 5 Workshops zur Auswahl · je 3 besuchte Workshops · 3 Halbtage</p>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="signup" class="active">Anmeldung</button>
+    <button data-tab="overview">Übersicht</button>
+  </nav>
+
+  <main>
+
+    <!-- SIGNUP -->
+    <section id="tab-signup" class="active">
+      <div class="card">
+        <h2>Neue Anmeldung</h2>
+        <label>Vorname</label>
+        <input type="text" id="p-vorname" placeholder="Vorname">
+        <label>Nachname</label>
+        <input type="text" id="p-nachname" placeholder="Nachname">
+        <label>Klasse</label>
+        <select id="p-class">
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="E">E</option>
+        </select>
+        <label>3 Workshops wählen</label>
+        <div class="hint">Tippe auf genau 3 der 5 Workshops.</div>
+        <div class="choice-grid" id="choice-grid"></div>
+        <label style="margin-top:14px;">4. Alternativ-Workshop</label>
+        <div class="hint">Kommt automatisch zum Einsatz, falls einer deiner 3 Wunsch-Workshops bereits ausgebucht ist. Muss sich von deinen 3 Wünschen unterscheiden.</div>
+        <select id="p-alt"></select>
+        <div class="row-actions">
+          <button class="btn btn-amber" id="add-participant">Anmelden</button>
+        </div>
+        <div id="signup-msg"></div>
+      </div>
+    </section>
+
+    <!-- OVERVIEW (Workshops, Teilnehmende, Zuteilung, Export zusammengefasst) -->
+    <section id="tab-overview">
+      <div class="card lock-card" data-lock="overview">
+        <h2>Geschützter Bereich</h2>
+        <p class="hint" style="margin-top:0;">Bitte Passwort eingeben, um Workshops, Teilnehmendenliste, Zuteilung und Export zu sehen.</p>
+        <label>Passwort</label>
+        <input type="password" class="lock-pw" placeholder="Passwort">
+        <div class="row-actions">
+          <button class="btn btn-primary unlock-btn">Entsperren</button>
+        </div>
+        <div class="lock-msg"></div>
+      </div>
+
+      <div class="lock-content" id="overview-content" style="display:none;">
+
+        <div class="card">
+          <h2>Die 5 Workshops</h2>
+          <div id="ws-rows"></div>
+          <label style="margin-top:14px;">Limite pro Workshop</label>
+          <div class="hint">Maximale Anzahl Personen, die diesen Workshop insgesamt wählen können (über alle 3 Halbtage hinweg = Limite × 3 Plätze). Ist die Limite erreicht, springt bei weiteren Anmeldungen automatisch der Alternativ-Workshop ein.</div>
+          <input type="number" id="global-cap" min="1" value="20" style="margin-top:8px; max-width:120px;">
+          <div class="row-actions">
+            <button class="btn btn-primary" id="save-setup">Speichern</button>
+          </div>
+          <div id="setup-msg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Angemeldete Teilnehmende</h2>
+          <div class="stat-row" id="list-stats"></div>
+          <div id="participant-table"></div>
+        </div>
+
+        <div class="card">
+          <h2>Zuteilung berechnen</h2>
+          <p class="hint" style="margin-top:0;">Berechnet, an welchem Halbtag jede Person welchen ihrer 3 gewählten Workshops besucht — ohne Kapazität zu überschreiten.</p>
+          <div class="row-actions">
+            <button class="btn btn-primary" id="run-assign">Zuteilung berechnen</button>
+          </div>
+          <div id="assign-msg"></div>
+        </div>
+        <div class="card" id="assign-result" style="display:none;">
+          <h2>Ergebnis</h2>
+          <div class="day-tabs" id="day-tabs"></div>
+          <div id="day-content"></div>
+        </div>
+
+        <div class="card">
+          <h2>Teilnehmerliste pro Workshop (Excel)</h2>
+          <p class="hint" style="margin-top:0;">Erstellt eine Excel-Datei mit Name, Klasse und Halbtag der TN, die einen bestimmten Workshop besuchen — zum Weitergeben an die Workshopleitung.</p>
+          <label>Workshop</label>
+          <select id="excel-ws"></select>
+          <div class="row-actions">
+            <button class="btn btn-primary" id="export-ws-excel">Excel herunterladen (dieser Workshop)</button>
+            <button class="btn btn-ghost" id="export-all-ws-excel">Excel — alle Workshops (je Blatt)</button>
+          </div>
+          <div id="excel-ws-msg"></div>
+        </div>
+
+        <div class="card">
+          <h2>Klassenliste drucken / exportieren</h2>
+          <p class="hint" style="margin-top:0;">Zeigt für eine Klasse, wer wann welchen Workshop besucht — als Druckansicht oder CSV.</p>
+          <label>Klasse</label>
+          <select id="print-class">
+            <option value="ALL">Alle Klassen</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+          </select>
+          <div class="row-actions">
+            <button class="btn btn-ghost" id="show-class-view">Anzeigen</button>
+            <button class="btn btn-primary" id="print-class-btn">Drucken</button>
+            <button class="btn btn-ghost" id="export-class-csv">CSV (nur diese Klasse)</button>
+          </div>
+          <div id="class-view-msg"></div>
+          <div id="class-view-table" style="margin-top:14px;"></div>
+        </div>
+
+        <div class="card">
+          <h2>Export</h2>
+          <p class="hint" style="margin-top:0;">Lädt eine CSV-Datei mit Name, Workshop Halbtag 1, Halbtag 2, Halbtag 3.</p>
+          <div class="row-actions">
+            <button class="btn btn-primary" id="export-csv">CSV herunterladen</button>
+          </div>
+          <div id="export-msg"></div>
+        </div>
+        <div class="card">
+          <h2>Alles zurücksetzen</h2>
+          <p class="hint" style="margin-top:0;">Löscht alle Anmeldungen und die berechnete Zuteilung (Workshop-Namen bleiben erhalten).</p>
+          <div class="row-actions">
+            <button class="btn btn-danger" id="reset-all">Anmeldungen löschen</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="print-area" class="print-only"></div>
+
+<script>
+// ============================================================
+// SPEICHER-BACKEND: Google Apps Script (Google Sheet als Datenbank)
+// ------------------------------------------------------------
+// WICHTIG: Hier die Web-App-URL deines Google Apps Script eintragen
+// (siehe apps-script-code.gs für die Einrichtung).
+// ============================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYzTHJxSI0FQTNitQMkjjITuAt7sDzEAezyLiV68xyL70tXSHXZKH-raUSvVaGlAtl8A/exec';
+
+// Ersetzt den bisherigen Claude-Artifact-Speicher durch Aufrufe an das
+// Google Apps Script. Die restliche Tool-Logik bleibt dadurch unverändert,
+// da dieselbe get/set-Schnittstelle nachgebaut wird.
+window.storage = {
+  async get(key){
+    if(APPS_SCRIPT_URL.includes('HIER_DEINE')){
+      console.error('APPS_SCRIPT_URL ist noch nicht gesetzt.');
+      return null;
+    }
+    const res = await fetch(APPS_SCRIPT_URL + '?key=' + encodeURIComponent(key));
+    const data = await res.json();
+    if(data.value === null || data.value === undefined || data.value === '') return null;
+    return { key: data.key, value: data.value };
+  },
+  async set(key, value){
+    if(APPS_SCRIPT_URL.includes('HIER_DEINE')){
+      console.error('APPS_SCRIPT_URL ist noch nicht gesetzt.');
+      return null;
+    }
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // vermeidet CORS-Preflight
+      body: JSON.stringify({ key, value })
+    });
+    const data = await res.json();
+    return { key: data.key, value: data.value };
+  }
+};
+
+const SHARED = true; // Daten sind für alle Nutzenden dieses Tools sichtbar
+let workshops = [
+  {id:'w1', name:'Ist alles anders? - Menschen mit ASS begleiten'},
+  {id:'w2', name:'Alle denken hier schnell? Willkommen in der Welt von ADHS'},
+  {id:'w3', name:'Sicher begleiten – Psychische Störungen verstehen'},
+  {id:'w4', name:'Mehr als Worte – Kommunizieren mit Kindern'},
+  {id:'w5', name:'Wenn Zuhause nicht sicher ist. Häusliche Gewalt, Kindes- und Erwachsenenschutz verstehen'}
+];
+let capacity = 20;
+let participants = [];
+let assignment = null; // {assign:{pid:{0:wsid,1:wsid,2:wsid}}, load:{0:{},1:{},2:{}}, overflow:n}
+let selectedChoices = [];
+let activeDay = 0;
+
+// ---------- storage helpers ----------
+async function loadAll(){
+  try{
+    const w = await window.storage.get('workshops-config', SHARED);
+    if(w && w.value){ const parsed = JSON.parse(w.value); workshops = parsed.workshops; capacity = parsed.capacity; }
+  }catch(e){}
+  try{
+    const p = await window.storage.get('participants', SHARED);
+    if(p && p.value){ participants = JSON.parse(p.value); }
+  }catch(e){}
+  try{
+    const a = await window.storage.get('assignment', SHARED);
+    if(a && a.value){ assignment = JSON.parse(a.value); }
+  }catch(e){}
+}
+async function saveWorkshops(){
+  await window.storage.set('workshops-config', JSON.stringify({workshops, capacity}), SHARED);
+}
+async function saveParticipants(){
+  await window.storage.set('participants', JSON.stringify(participants), SHARED);
+}
+async function saveAssignment(){
+  await window.storage.set('assignment', JSON.stringify(assignment), SHARED);
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='signup') renderChoiceGrid();
+    if(btn.dataset.tab==='overview'){ renderList(); renderAssignTab(); }
+  });
+});
+
+// ---------- setup rendering ----------
+function renderWsRows(){
+  const el = document.getElementById('ws-rows');
+  el.innerHTML = '';
+  workshops.forEach((w,i)=>{
+    const row = document.createElement('div');
+    row.style.marginBottom = '14px';
+    row.innerHTML = `
+      <div class="ws-row" style="margin-bottom:5px;">
+        <span class="num">${i+1}</span>
+        <input type="text" data-idx="${i}" class="ws-name" value="${escapeHtml(w.name)}" placeholder="Titel">
+      </div>
+      <textarea data-idx="${i}" class="ws-desc" placeholder="Kurzbeschreibung / Thema (optional)" style="width:100%; min-height:44px; padding:8px 10px; border:1px solid var(--line); border-radius:3px; font-family:inherit; font-size:0.85rem; background:var(--paper); color:var(--ink); resize:vertical;">${escapeHtml(w.desc||'')}</textarea>
+    `;
+    el.appendChild(row);
+  });
+}
+document.getElementById('save-setup').addEventListener('click', async ()=>{
+  document.querySelectorAll('#ws-rows .ws-name').forEach(inp=>{
+    workshops[+inp.dataset.idx].name = inp.value.trim() || workshops[+inp.dataset.idx].name;
+  });
+  document.querySelectorAll('#ws-rows .ws-desc').forEach(ta=>{
+    workshops[+ta.dataset.idx].desc = ta.value.trim();
+  });
+  capacity = Math.max(1, parseInt(document.getElementById('global-cap').value) || 20);
+  await saveWorkshops();
+  showMsg('setup-msg', 'Gespeichert.', 'ok');
+  renderChoiceGrid();
+  renderExcelWsSelect();
+});
+
+// ---------- Passwortschutz (alle Bereiche außer Anmeldung) ----------
+const APP_PASSWORD = 'Keinwort';
+let appUnlocked = false;
+function refreshLocks(){
+  document.querySelectorAll('.lock-card').forEach(el=>{ el.style.display = appUnlocked ? 'none' : 'block'; });
+  document.querySelectorAll('.lock-content').forEach(el=>{ el.style.display = appUnlocked ? 'block' : 'none'; });
+}
+document.querySelectorAll('.unlock-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const card = btn.closest('.lock-card');
+    const val = card.querySelector('.lock-pw').value;
+    const msgEl = card.querySelector('.lock-msg');
+    if(val === APP_PASSWORD){
+      appUnlocked = true;
+      card.querySelector('.lock-pw').value = '';
+      msgEl.innerHTML = '';
+      refreshLocks();
+    } else {
+      msgEl.innerHTML = '<div class="msg msg-err">Falsches Passwort.</div>';
+    }
+  });
+});
+document.querySelectorAll('.lock-pw').forEach(inp=>{
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ inp.closest('.lock-card').querySelector('.unlock-btn').click(); }
+  });
+});
+
+// ---------- signup ----------
+function renderChoiceGrid(){
+  const grid = document.getElementById('choice-grid');
+  grid.innerHTML = '';
+  workshops.forEach(w=>{
+    const div = document.createElement('div');
+    div.className = 'choice' + (selectedChoices.includes(w.id) ? ' selected' : '');
+    const order = selectedChoices.indexOf(w.id);
+    const descHtml = w.desc ? `<div style="font-weight:400; font-size:0.78rem; color:#6B756F; margin-top:4px; line-height:1.35;">${escapeHtml(w.desc)}</div>` : '';
+    div.innerHTML = `<div>${escapeHtml(w.name)}</div>${descHtml}` + (order>=0 ? `<span class="badge">${order+1}</span>` : '');
+    div.addEventListener('click', ()=>{
+      const idx = selectedChoices.indexOf(w.id);
+      if(idx>=0){ selectedChoices.splice(idx,1); }
+      else{
+        if(selectedChoices.length>=3){ showMsg('signup-msg','Bitte nur 3 Workshops wählen — zuerst eine Auswahl abwählen.','err'); return; }
+        selectedChoices.push(w.id);
+      }
+      renderChoiceGrid();
+    });
+    grid.appendChild(div);
+  });
+  renderAltSelect();
+}
+function renderAltSelect(){
+  const sel = document.getElementById('p-alt');
+  const prevValue = sel.value;
+  sel.innerHTML = '';
+  workshops.forEach(w=>{
+    const opt = document.createElement('option');
+    opt.value = w.id;
+    opt.textContent = w.name;
+    sel.appendChild(opt);
+  });
+  if(prevValue && workshops.some(w=>w.id===prevValue)) sel.value = prevValue;
+}
+function normalizeName(s){
+  return String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+// Zählt, wie oft jeder Workshop aktuell als einer der 3 Wunsch-Workshops gewählt wurde
+function countSelections(list){
+  const counts = {};
+  workshops.forEach(w=>{ counts[w.id]=0; });
+  list.forEach(p=>{ (p.choices||[]).forEach(id=>{ counts[id]=(counts[id]||0)+1; }); });
+  return counts;
+}
+document.getElementById('add-participant').addEventListener('click', async ()=>{
+  const vorname = document.getElementById('p-vorname').value.trim();
+  const nachname = document.getElementById('p-nachname').value.trim();
+  const klasse = document.getElementById('p-class').value;
+  const altId = document.getElementById('p-alt').value;
+  if(!vorname || !nachname){ showMsg('signup-msg','Bitte Vor- und Nachname eingeben.','err'); return; }
+  if(selectedChoices.length!==3){ showMsg('signup-msg','Bitte genau 3 Workshops wählen.','err'); return; }
+  if(selectedChoices.includes(altId)){ showMsg('signup-msg','Der Alternativ-Workshop muss sich von deinen 3 Wünschen unterscheiden.','err'); return; }
+
+  // aktuellen Stand laden, damit Duplikate & Limiten auch bei gleichzeitigen Anmeldungen korrekt erkannt werden
+  try{
+    const p = await window.storage.get('participants', SHARED);
+    if(p && p.value){ participants = JSON.parse(p.value); }
+  }catch(e){}
+
+  const isDuplicate = participants.some(p =>
+    normalizeName(p.vorname)===normalizeName(vorname) && normalizeName(p.nachname)===normalizeName(nachname)
+  );
+  if(isDuplicate){
+    showMsg('signup-msg', `${vorname} ${nachname} ist bereits angemeldet.`, 'err');
+    return;
+  }
+
+  // Limite pro Workshop prüfen (Limite × 3 Halbtage = Gesamtplätze über die Laufzeit)
+  const totalCapPerWorkshop = capacity * 3;
+  const counts = countSelections(participants);
+  let finalChoices = [...selectedChoices];
+  let substituted = null;
+
+  const fullOnes = finalChoices.filter(id => (counts[id]||0) >= totalCapPerWorkshop);
+  if(fullOnes.length > 1){
+    showMsg('signup-msg', `Mehrere deiner gewählten Workshops sind bereits ausgebucht. Bitte wähle andere Workshops.`, 'err');
+    return;
+  }
+  if(fullOnes.length === 1){
+    const fullId = fullOnes[0];
+    if((counts[altId]||0) >= totalCapPerWorkshop){
+      showMsg('signup-msg', `${wsName(fullId)} ist ausgebucht und dein Alternativ-Workshop ${wsName(altId)} ebenfalls. Bitte wähle einen anderen Alternativ-Workshop.`, 'err');
+      return;
+    }
+    finalChoices = finalChoices.map(id => id===fullId ? altId : id);
+    substituted = fullId;
+  }
+
+  const name = `${vorname} ${nachname}`;
+  participants.push({
+    id:'p'+Date.now()+Math.floor(Math.random()*1000),
+    vorname, nachname, name, klasse,
+    choices: finalChoices,
+    wunschChoices: [...selectedChoices],
+    alternative: altId,
+    substituted
+  });
+  await saveParticipants();
+  document.getElementById('p-vorname').value='';
+  document.getElementById('p-nachname').value='';
+  selectedChoices = [];
+  renderChoiceGrid();
+  if(substituted){
+    showMsg('signup-msg', `${name} angemeldet — ${wsName(substituted)} war ausgebucht, stattdessen ${wsName(altId)} zugeteilt (${participants.length} / ~85).`, 'ok');
+  } else {
+    showMsg('signup-msg', `${name} (Klasse ${klasse}) angemeldet (${participants.length} / ~85).`, 'ok');
+  }
+});
+
+// ---------- list ----------
+function renderList(){
+  const stats = document.getElementById('list-stats');
+  stats.innerHTML = `
+    <div class="stat"><div class="num">${participants.length}</div><div class="lbl">angemeldet</div></div>
+    <div class="stat"><div class="num">${Math.max(0,85-participants.length)}</div><div class="lbl">noch offen (ca.)</div></div>
+  `;
+  const el = document.getElementById('participant-table');
+  if(participants.length===0){
+    el.innerHTML = '<div class="empty">Noch niemand angemeldet.</div>';
+    return;
+  }
+  let rows = participants.map(p=>{
+    const names = p.choices.map(id=>wsName(id)).join(', ');
+    const substNote = p.substituted ? `<div style="color:var(--amber-dark); font-size:0.75rem; margin-top:2px;">Ersatz: ${escapeHtml(wsName(p.substituted))} war voll → ${escapeHtml(wsName(p.alternative))} eingesetzt</div>` : '';
+    return `<tr><td>${escapeHtml(p.name)}</td><td class="center">${escapeHtml(p.klasse||'–')}</td><td>${names}${substNote}</td><td class="center"><button class="del-x" data-id="${p.id}">✕</button></td></tr>`;
+  }).join('');
+  el.innerHTML = `<table><thead><tr><th>Name</th><th class="center">Klasse</th><th>Wahl</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  el.querySelectorAll('.del-x').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      participants = participants.filter(p=>p.id!==btn.dataset.id);
+      await saveParticipants();
+      renderList();
+    });
+  });
+}
+
+// ---------- assignment algorithm ----------
+function permutations(arr){
+  if(arr.length<=1) return [arr];
+  const res=[];
+  for(let i=0;i<arr.length;i++){
+    const rest=[...arr.slice(0,i),...arr.slice(i+1)];
+    for(const p of permutations(rest)) res.push([arr[i],...p]);
+  }
+  return res;
+}
+function computeAssignment(){
+  // Ziel 1 (hart): Kapazität pro Workshop/Halbtag einhalten.
+  // Ziel 2 (weich): TN derselben Klasse auf möglichst viele verschiedene
+  // Workshop-Gruppen pro Halbtag verteilen, statt sie zu häufen.
+  const days=3, tries=60;
+  let best=null;
+  for(let t=0;t<tries;t++){
+    const order=[...participants].sort(()=>Math.random()-0.5);
+    const load={};        // load[day][wsId] = Anzahl TN
+    const classLoad={};   // classLoad[day][wsId][klasse] = Anzahl TN dieser Klasse
+    for(let d=0; d<days; d++){
+      load[d]={}; classLoad[d]={};
+      workshops.forEach(w=>{ load[d][w.id]=0; classLoad[d][w.id]={}; });
+    }
+    const assign={};
+    let overflow=0;
+    for(const p of order){
+      const perms=permutations(p.choices).sort(()=>Math.random()-0.5);
+      const klasse = p.klasse || '–';
+      let bestPerm=null, bestOverflow=Infinity, bestCluster=Infinity;
+      for(const perm of perms){
+        let permOverflow=0, permCluster=0;
+        for(let d=0; d<days; d++){
+          const wsId=perm[d];
+          if(load[d][wsId] >= capacity) permOverflow++;
+          permCluster += classLoad[d][wsId][klasse] || 0;
+        }
+        if(permOverflow<bestOverflow || (permOverflow===bestOverflow && permCluster<bestCluster)){
+          bestOverflow=permOverflow; bestCluster=permCluster; bestPerm=perm;
+        }
+        if(bestOverflow===0 && bestCluster===0) break;
+      }
+      overflow+=bestOverflow;
+      assign[p.id]={};
+      for(let d=0; d<days; d++){
+        const wsId=bestPerm[d];
+        assign[p.id][d]=wsId;
+        load[d][wsId]++;
+        classLoad[d][wsId][klasse] = (classLoad[d][wsId][klasse]||0) + 1;
+      }
+    }
+    // Klassendurchmischung bewerten: Anzahl gleichklassiger Paare je Workshop/Halbtag
+    let clusterScore=0;
+    for(let d=0; d<days; d++){
+      workshops.forEach(w=>{
+        Object.values(classLoad[d][w.id]).forEach(c=>{ clusterScore += c*(c-1)/2; });
+      });
+    }
+    if(best===null || overflow<best.overflow || (overflow===best.overflow && clusterScore<best.clusterScore)){
+      best={assign, load, overflow, clusterScore};
+    }
+    if(best.overflow===0 && best.clusterScore===0) break;
+  }
+  return best;
+}
+document.getElementById('run-assign').addEventListener('click', async ()=>{
+  if(participants.length===0){ showMsg('assign-msg','Es sind noch keine Teilnehmenden angemeldet.','err'); return; }
+  const result = computeAssignment();
+  assignment = result;
+  await saveAssignment();
+  if(result.overflow===0){
+    showMsg('assign-msg', 'Zuteilung erfolgreich — alle Kapazitäten eingehalten.', 'ok');
+  } else {
+    showMsg('assign-msg', `Zuteilung berechnet, aber ${result.overflow}× wurde die Kapazität leicht überschritten. Kapazität pro Workshop evtl. erhöhen.`, 'err');
+  }
+  renderAssignTab();
+});
+function renderAssignTab(){
+  const resultCard = document.getElementById('assign-result');
+  if(!assignment){ resultCard.style.display='none'; return; }
+  resultCard.style.display='block';
+  const dayTabs = document.getElementById('day-tabs');
+  dayTabs.innerHTML = '';
+  for(let d=0; d<3; d++){
+    const b = document.createElement('button');
+    b.textContent = 'Halbtag ' + (d+1);
+    if(d===activeDay) b.classList.add('active');
+    b.addEventListener('click', ()=>{ activeDay=d; renderAssignTab(); });
+    dayTabs.appendChild(b);
+  }
+  const content = document.getElementById('day-content');
+  content.innerHTML = '';
+  workshops.forEach(w=>{
+    const attendees = participants.filter(p=>assignment.assign[p.id] && assignment.assign[p.id][activeDay]===w.id);
+    const over = attendees.length > capacity;
+    const block = document.createElement('div');
+    block.className = 'ws-block';
+    block.innerHTML = `<h3>${escapeHtml(w.name)} <span class="pill ${over?'pill-warn':'pill-ok'}">${attendees.length} / ${capacity}</span></h3>
+      <ul>${attendees.map(a=>`<li>${escapeHtml(a.name)} <span style="color:#8A948E;">(${escapeHtml(a.klasse||'–')})</span></li>`).join('') || '<li style="color:#8A948E; list-style:none; margin-left:-18px;">— niemand zugeteilt —</li>'}</ul>`;
+    content.appendChild(block);
+  });
+}
+
+// ---------- export ----------
+document.getElementById('export-csv').addEventListener('click', ()=>{
+  if(!assignment){ showMsg('export-msg','Bitte zuerst eine Zuteilung berechnen.','err'); return; }
+  let csv = 'Name,Klasse,Halbtag 1,Halbtag 2,Halbtag 3\n';
+  participants.forEach(p=>{
+    const a = assignment.assign[p.id];
+    if(!a) return;
+    csv += `"${p.name.replace(/"/g,'""')}","${(p.klasse||'').replace(/"/g,'""')}","${wsName(a[0])}","${wsName(a[1])}","${wsName(a[2])}"\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'workshop-zuteilung.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showMsg('export-msg','CSV heruntergeladen.','ok');
+});
+document.getElementById('reset-all').addEventListener('click', async ()=>{
+  if(!confirm('Wirklich alle Anmeldungen und die Zuteilung löschen?')) return;
+  participants = [];
+  assignment = null;
+  await saveParticipants();
+  await window.storage.set('assignment', JSON.stringify(null), SHARED);
+  renderList();
+  renderAssignTab();
+});
+
+// ---------- Excel-Export pro Workshop ----------
+function renderExcelWsSelect(){
+  const sel = document.getElementById('excel-ws');
+  const prevValue = sel.value;
+  sel.innerHTML = '';
+  workshops.forEach(w=>{
+    const opt = document.createElement('option');
+    opt.value = w.id;
+    opt.textContent = w.name;
+    sel.appendChild(opt);
+  });
+  if(prevValue && workshops.some(w=>w.id===prevValue)) sel.value = prevValue;
+}
+function attendeesGroupedByDay(wsId){
+  const groups = [[],[],[]];
+  if(!assignment) return groups;
+  participants.forEach(p=>{
+    const a = assignment.assign[p.id];
+    if(!a) return;
+    for(let d=0; d<3; d++){
+      if(a[d]===wsId) groups[d].push({ Name: p.name, Klasse: p.klasse||'–' });
+    }
+  });
+  groups.forEach(g => g.sort((x,y)=> x.Name.localeCompare(y.Name,'de')));
+  return groups;
+}
+function buildWorkshopSheet(wsId){
+  const title = wsName(wsId);
+  const groups = attendeesGroupedByDay(wsId);
+  const aoa = [];
+  aoa.push([title]);
+  aoa.push(['Name','Klasse','Halbtag']);
+  let hasRows = false;
+  groups.forEach((g, d)=>{
+    g.forEach(p=>{ aoa.push([p.Name, p.Klasse, 'Halbtag '+(d+1)]); hasRows = true; });
+    if(d<2) aoa.push([]); // Leerzeile zwischen den 3 Durchgängen
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:28},{wch:10},{wch:14}];
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:2} }]; // Titelzeile über 3 Spalten
+  return { ws, hasRows };
+}
+function safeSheetName(name){
+  // Excel-Blattnamen: max. 31 Zeichen, ohne : \ / ? * [ ]
+  return String(name).replace(/[:\\/?*\[\]]/g,'').slice(0,31) || 'Workshop';
+}
+document.getElementById('export-ws-excel').addEventListener('click', ()=>{
+  if(!assignment){ showMsg('excel-ws-msg','Bitte zuerst unter «Zuteilung» eine Zuteilung berechnen.','err'); return; }
+  const wsId = document.getElementById('excel-ws').value;
+  const { ws, hasRows } = buildWorkshopSheet(wsId);
+  if(!hasRows){ showMsg('excel-ws-msg','Für diesen Workshop sind keine TN zugeteilt.','err'); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName(wsName(wsId)));
+  XLSX.writeFile(wb, safeSheetName(wsName(wsId)) + '.xlsx');
+  showMsg('excel-ws-msg','Excel-Datei heruntergeladen.','ok');
+});
+document.getElementById('export-all-ws-excel').addEventListener('click', ()=>{
+  if(!assignment){ showMsg('excel-ws-msg','Bitte zuerst unter «Zuteilung» eine Zuteilung berechnen.','err'); return; }
+  const wb = XLSX.utils.book_new();
+  let anyRows = false;
+  workshops.forEach(w=>{
+    const { ws, hasRows } = buildWorkshopSheet(w.id);
+    if(hasRows) anyRows = true;
+    XLSX.utils.book_append_sheet(wb, ws, safeSheetName(w.name));
+  });
+  if(!anyRows){ showMsg('excel-ws-msg','Keine TN zugeteilt.','err'); return; }
+  XLSX.writeFile(wb, 'Workshops-alle.xlsx');
+  showMsg('excel-ws-msg','Excel-Datei (alle Workshops) heruntergeladen.','ok');
+});
+
+// ---------- class view / print ----------
+function buildClassRows(klasseFilter){
+  if(!assignment) return null;
+  let list = participants.filter(p=>assignment.assign[p.id]);
+  if(klasseFilter!=='ALL') list = list.filter(p=>(p.klasse||'')===klasseFilter);
+  list.sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  return list;
+}
+function renderClassViewTable(klasseFilter){
+  const el = document.getElementById('class-view-table');
+  if(!assignment){ el.innerHTML=''; showMsg('class-view-msg','Bitte zuerst unter "Zuteilung" eine Zuteilung berechnen.','err'); return; }
+  const list = buildClassRows(klasseFilter);
+  if(list.length===0){ el.innerHTML = '<div class="empty">Keine Teilnehmenden für diese Auswahl.</div>'; return; }
+  const rows = list.map(p=>{
+    const a = assignment.assign[p.id];
+    return `<tr><td>${escapeHtml(p.name)}</td><td class="center">${escapeHtml(p.klasse||'–')}</td><td>${escapeHtml(wsName(a[0]))}</td><td>${escapeHtml(wsName(a[1]))}</td><td>${escapeHtml(wsName(a[2]))}</td></tr>`;
+  }).join('');
+  el.innerHTML = `<table><thead><tr><th>Name</th><th class="center">Klasse</th><th>Halbtag 1</th><th>Halbtag 2</th><th>Halbtag 3</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+document.getElementById('show-class-view').addEventListener('click', ()=>{
+  renderClassViewTable(document.getElementById('print-class').value);
+});
+document.getElementById('print-class-btn').addEventListener('click', ()=>{
+  if(!assignment){ showMsg('class-view-msg','Bitte zuerst unter "Zuteilung" eine Zuteilung berechnen.','err'); return; }
+  const klasseFilter = document.getElementById('print-class').value;
+  const list = buildClassRows(klasseFilter);
+  if(list.length===0){ showMsg('class-view-msg','Keine Teilnehmenden für diese Auswahl.','err'); return; }
+  const title = klasseFilter==='ALL' ? 'Alle Klassen' : ('Klasse ' + klasseFilter);
+  const rows = list.map(p=>{
+    const a = assignment.assign[p.id];
+    return `<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.klasse||'–')}</td><td>${escapeHtml(wsName(a[0]))}</td><td>${escapeHtml(wsName(a[1]))}</td><td>${escapeHtml(wsName(a[2]))}</td></tr>`;
+  }).join('');
+  document.getElementById('print-area').innerHTML = `
+    <h1>Workshop-Zuteilung — ${escapeHtml(title)}</h1>
+    <div class="meta">${list.length} Teilnehmende</div>
+    <table><thead><tr><th>Name</th><th>Klasse</th><th>Halbtag 1</th><th>Halbtag 2</th><th>Halbtag 3</th></tr></thead><tbody>${rows}</tbody></table>
+  `;
+  window.print();
+});
+document.getElementById('export-class-csv').addEventListener('click', ()=>{
+  if(!assignment){ showMsg('class-view-msg','Bitte zuerst unter "Zuteilung" eine Zuteilung berechnen.','err'); return; }
+  const klasseFilter = document.getElementById('print-class').value;
+  const list = buildClassRows(klasseFilter);
+  if(list.length===0){ showMsg('class-view-msg','Keine Teilnehmenden für diese Auswahl.','err'); return; }
+  let csv = 'Name,Klasse,Halbtag 1,Halbtag 2,Halbtag 3\n';
+  list.forEach(p=>{
+    const a = assignment.assign[p.id];
+    csv += `"${p.name.replace(/"/g,'""')}","${(p.klasse||'').replace(/"/g,'""')}","${wsName(a[0])}","${wsName(a[1])}","${wsName(a[2])}"\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'klasse-' + (klasseFilter==='ALL'?'alle':klasseFilter) + '.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showMsg('class-view-msg','CSV heruntergeladen.','ok');
+});
+
+// ---------- helpers ----------
+function wsName(id){ const w = workshops.find(w=>w.id===id); return w ? w.name : id; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showMsg(elId, text, type){
+  const el = document.getElementById(elId);
+  el.innerHTML = `<div class="msg msg-${type}">${text}</div>`;
+  setTimeout(()=>{ el.innerHTML=''; }, 4000);
+}
+
+// ---------- init ----------
+(async function init(){
+  await loadAll();
+  renderWsRows();
+  document.getElementById('global-cap').value = capacity;
+  refreshLocks();
+  renderChoiceGrid();
+  renderExcelWsSelect();
+  renderList();
+  renderAssignTab();
+})();
+</script>
+</body>
+</html>
